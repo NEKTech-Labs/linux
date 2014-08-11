@@ -228,13 +228,10 @@ early_param("isolnodes", setup_isolnodes);
 #if defined(CONFIG_PCI) && !defined(__tilegx__)
 static int __init setup_pci_reserve(char* str)
 {
-	unsigned long mb;
-
-	if (str == NULL || strict_strtoul(str, 0, &mb) != 0 ||
-	    mb > 3 * 1024)
+	if (str == NULL || kstrtouint(str, 0, &pci_reserve_mb) != 0 ||
+	    pci_reserve_mb > 3 * 1024)
 		return -EINVAL;
 
-	pci_reserve_mb = mb;
 	pr_info("Reserving %dMB for PCIE root complex mappings\n",
 		pci_reserve_mb);
 	return 0;
@@ -691,7 +688,7 @@ static void __init setup_bootmem_allocator(void)
 	/* Reserve any memory excluded by "memmap" arguments. */
 	for (i = 0; i < memmap_nr; ++i) {
 		struct memmap_entry *m = &memmap_map[i];
-		reserve_bootmem(m->addr, m->size, 0);
+		reserve_bootmem(m->addr, m->size, BOOTMEM_DEFAULT);
 	}
 
 #ifdef CONFIG_BLK_DEV_INITRD
@@ -715,7 +712,8 @@ static void __init setup_bootmem_allocator(void)
 
 #ifdef CONFIG_KEXEC
 	if (crashk_res.start != crashk_res.end)
-		reserve_bootmem(crashk_res.start, resource_size(&crashk_res), 0);
+		reserve_bootmem(crashk_res.start, resource_size(&crashk_res),
+				BOOTMEM_DEFAULT);
 #endif
 }
 
@@ -1268,8 +1266,7 @@ static void __init validate_va(void)
 	if ((long)VMALLOC_START >= 0)
 		early_panic(
 			"Linux VMALLOC region below the 2GB line (%#lx)!\n"
-			"Reconfigure the kernel with fewer NR_HUGE_VMAPS\n"
-			"or smaller VMALLOC_RESERVE.\n",
+			"Reconfigure the kernel with smaller VMALLOC_RESERVE.\n",
 			VMALLOC_START);
 #endif
 }

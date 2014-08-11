@@ -55,10 +55,10 @@
 
 # define DEBUG_SUBSYSTEM S_LNET
 
-#include <linux/libcfs/libcfs.h>
-#include <linux/libcfs/linux/portals_compat25.h>
+#include "../../../include/linux/libcfs/libcfs.h"
+#include "../../../include/linux/libcfs/linux/portals_compat25.h"
 
-#include "tracefile.h"
+#include "../tracefile.h"
 
 #include <linux/kallsyms.h>
 
@@ -137,7 +137,7 @@ void libcfs_run_lbug_upcall(struct libcfs_debug_msg_data *msgdata)
 	char *argv[6];
 	char buf[32];
 
-	snprintf (buf, sizeof buf, "%d", msgdata->msg_line);
+	snprintf(buf, sizeof(buf), "%d", msgdata->msg_line);
 
 	argv[1] = "LBUG";
 	argv[2] = (char *)msgdata->msg_file;

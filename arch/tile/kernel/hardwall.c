@@ -66,7 +66,7 @@ static struct hardwall_type hardwall_types[] = {
 		0,
 		"udn",
 		LIST_HEAD_INIT(hardwall_types[HARDWALL_UDN].list),
-		__SPIN_LOCK_INITIALIZER(hardwall_types[HARDWALL_UDN].lock),
+		__SPIN_LOCK_UNLOCKED(hardwall_types[HARDWALL_UDN].lock),
 		NULL
 	},
 #ifndef __tilepro__
@@ -77,7 +77,7 @@ static struct hardwall_type hardwall_types[] = {
 		1,  /* disabled pending hypervisor support */
 		"idn",
 		LIST_HEAD_INIT(hardwall_types[HARDWALL_IDN].list),
-		__SPIN_LOCK_INITIALIZER(hardwall_types[HARDWALL_IDN].lock),
+		__SPIN_LOCK_UNLOCKED(hardwall_types[HARDWALL_IDN].lock),
 		NULL
 	},
 	{  /* access to user-space IPI */
@@ -87,7 +87,7 @@ static struct hardwall_type hardwall_types[] = {
 		0,
 		"ipi",
 		LIST_HEAD_INIT(hardwall_types[HARDWALL_IPI].list),
-		__SPIN_LOCK_INITIALIZER(hardwall_types[HARDWALL_IPI].lock),
+		__SPIN_LOCK_UNLOCKED(hardwall_types[HARDWALL_IPI].lock),
 		NULL
 	},
 #endif
@@ -947,15 +947,15 @@ static void hardwall_remove_proc(struct hardwall_info *info)
 	remove_proc_entry(buf, info->type->proc_dir);
 }
 
-int proc_pid_hardwall(struct task_struct *task, char *buffer)
+int proc_pid_hardwall(struct seq_file *m, struct pid_namespace *ns,
+		      struct pid *pid, struct task_struct *task)
 {
 	int i;
 	int n = 0;
 	for (i = 0; i < HARDWALL_TYPES; ++i) {
 		struct hardwall_info *info = task->thread.hardwall[i].info;
 		if (info)
-			n += sprintf(&buffer[n], "%s: %d\n",
-				     info->type->name, info->id);
+			seq_printf(m, "%s: %d\n", info->type->name, info->id);
 	}
 	return n;
 }

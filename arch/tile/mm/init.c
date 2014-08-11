@@ -273,9 +273,9 @@ static pgprot_t __init init_pgprot(ulong address)
 	/*
 	 * Otherwise we just hand out consecutive cpus.  To avoid
 	 * requiring this function to hold state, we just walk forward from
-	 * _sdata by PAGE_SIZE, skipping the readonly and init data, to reach
-	 * the requested address, while walking cpu home around kdata_mask.
-	 * This is typically no more than a dozen or so iterations.
+	 * __end_rodata by PAGE_SIZE, skipping the readonly and init data, to
+	 * reach the requested address, while walking cpu home around
+	 * kdata_mask. This is typically no more than a dozen or so iterations.
 	 */
 	page = (((ulong)__end_rodata) + PAGE_SIZE - 1) & PAGE_MASK;
 	BUG_ON(address < page || address >= (ulong)_end);
@@ -828,10 +828,6 @@ void __init mem_init(void)
 	printk(KERN_DEBUG "  PKMAP   %#lx - %#lx\n",
 	       PKMAP_BASE, PKMAP_ADDR(LAST_PKMAP) - 1);
 #endif
-#ifdef CONFIG_HUGEVMAP
-	printk(KERN_DEBUG "  HUGEMAP %#lx - %#lx\n",
-	       HUGE_VMAP_BASE, HUGE_VMAP_END - 1);
-#endif
 	printk(KERN_DEBUG "  VMALLOC %#lx - %#lx\n",
 	       _VMALLOC_START, _VMALLOC_END - 1);
 #ifdef __tilegx__
@@ -916,7 +912,7 @@ static long __write_once initfree = 1;
 static int __init set_initfree(char *str)
 {
 	long val;
-	if (strict_strtol(str, 0, &val) == 0) {
+	if (kstrtol(str, 0, &val) == 0) {
 		initfree = val;
 		pr_info("initfree: %s free init pages\n",
 			initfree ? "will" : "won't");

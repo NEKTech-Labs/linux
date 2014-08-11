@@ -45,7 +45,7 @@
 /*
  * Driver identification, error and debugging statments
  *
- * In theory, you can change all occurances of "digi" in the next
+ * In theory, you can change all occurrences of "digi" in the next
  * three lines, and the driver printk's will all automagically change.
  *
  * APR((fmt, args, ...));	Always prints message
@@ -91,57 +91,6 @@
 
 #define	DBG_CARR		(dgnc_debug & 0x10000)
 
-
-#if defined(DGNC_TRACER)
-
-# if defined(TRC_TO_KMEM)
-/* Choose one: */
-#  define TRC_ON_OVERFLOW_WRAP_AROUND
-#  undef  TRC_ON_OVERFLOW_SHIFT_BUFFER
-# endif //TRC_TO_KMEM
-
-# define TRC_MAXMSG		1024
-# define TRC_OVERFLOW		"(OVERFLOW)"
-# define TRC_DTRC		"/usr/bin/dtrc"
-
-#if defined TRC_TO_CONSOLE
-#define PRINTF_TO_CONSOLE(args) { printk(DRVSTR": "); printk args; }
-#else //!defined TRACE_TO_CONSOLE
-#define PRINTF_TO_CONSOLE(args)
-#endif
-
-#if defined TRC_TO_KMEM
-#define PRINTF_TO_KMEM(args) dgnc_tracef args
-#else //!defined TRC_TO_KMEM
-#define PRINTF_TO_KMEM(args)
-#endif
-
-#define	TRC(args)	{ PRINTF_TO_KMEM(args); PRINTF_TO_CONSOLE(args) }
-
-# define DPR_INIT(ARGS)		if (DBG_INIT) TRC(ARGS)
-# define DPR_BASIC(ARGS)	if (DBG_BASIC) TRC(ARGS)
-# define DPR_CORE(ARGS)		if (DBG_CORE) TRC(ARGS)
-# define DPR_OPEN(ARGS)		if (DBG_OPEN)  TRC(ARGS)
-# define DPR_CLOSE(ARGS)	if (DBG_CLOSE)  TRC(ARGS)
-# define DPR_READ(ARGS)		if (DBG_READ)  TRC(ARGS)
-# define DPR_WRITE(ARGS)	if (DBG_WRITE) TRC(ARGS)
-# define DPR_IOCTL(ARGS)	if (DBG_IOCTL) TRC(ARGS)
-# define DPR_PROC(ARGS)		if (DBG_PROC)  TRC(ARGS)
-# define DPR_PARAM(ARGS)	if (DBG_PARAM)  TRC(ARGS)
-# define DPR_PSCAN(ARGS)	if (DBG_PSCAN)  TRC(ARGS)
-# define DPR_EVENT(ARGS)	if (DBG_EVENT)  TRC(ARGS)
-# define DPR_DRAIN(ARGS)	if (DBG_DRAIN)  TRC(ARGS)
-# define DPR_CARR(ARGS)		if (DBG_CARR)  TRC(ARGS)
-# define DPR_MGMT(ARGS)		if (DBG_MGMT)  TRC(ARGS)
-# define DPR_INTR(ARGS)		if (DBG_INTR)  TRC(ARGS)
-# define DPR_MSIGS(ARGS)	if (DBG_MSIGS)  TRC(ARGS)
-
-# define DPR(ARGS)		if (dgnc_debug) TRC(ARGS)
-# define P(X)			dgnc_tracef(#X "=%p\n", X)
-# define X(X)			dgnc_tracef(#X "=%x\n", X)
-
-#else//!defined DGNC_TRACER
-
 #define PRINTF_TO_KMEM(args)
 # define TRC(ARGS)
 # define DPR_INIT(ARGS)
@@ -163,8 +112,6 @@
 # define DPR_MSIGS(ARGS)
 
 # define DPR(args)
-
-#endif//DGNC_TRACER
 
 /* Number of boards we support at once. */
 #define	MAXBOARDS	20
@@ -219,8 +166,8 @@
  * Makes spotting lock/unlock locations easier.
  */
 # define DGNC_SPINLOCK_INIT(x)		spin_lock_init(&(x))
-# define DGNC_LOCK(x,y)			spin_lock_irqsave(&(x), y)
-# define DGNC_UNLOCK(x,y)		spin_unlock_irqrestore(&(x), y)
+# define DGNC_LOCK(x, y)		spin_lock_irqsave(&(x), y)
+# define DGNC_UNLOCK(x, y)		spin_unlock_irqrestore(&(x), y)
 
 /*
  * All the possible states the driver can be while being loaded.
@@ -246,7 +193,7 @@ enum {
  *
  *************************************************************************/
 
-struct board_t;
+struct dgnc_board;
 struct channel_t;
 
 /************************************************************************
@@ -259,7 +206,7 @@ struct board_ops {
 	void (*uart_off) (struct channel_t *ch);
 	int  (*drain) (struct tty_struct *tty, uint seconds);
 	void (*param) (struct tty_struct *tty);
-	void (*vpd) (struct board_t *brd);
+	void (*vpd) (struct dgnc_board *brd);
 	void (*assert_modem_signals) (struct channel_t *ch);
 	void (*flush_uart_write) (struct channel_t *ch);
 	void (*flush_uart_read) (struct channel_t *ch);
@@ -282,7 +229,7 @@ struct board_ops {
 /*
  *	Per-board information
  */
-struct board_t {
+struct dgnc_board {
 	int		magic;		/* Board Magic number.  */
 	int		boardnum;	/* Board number: 0-32 */
 
@@ -449,7 +396,7 @@ struct un_t {
  ************************************************************************/
 struct channel_t {
 	int magic;			/* Channel Magic Number		*/
-	struct board_t	*ch_bd;		/* Board structure pointer      */
+	struct dgnc_board	*ch_bd;		/* Board structure pointer      */
 	struct digi_t	ch_digi;	/* Transparent Print structure  */
 	struct un_t	ch_tun;		/* Terminal unit info	   */
 	struct un_t	ch_pun;		/* Printer unit info	    */
@@ -555,7 +502,7 @@ extern int		dgnc_poll_tick;		/* Poll interval - 20 ms	*/
 extern int		dgnc_trcbuf_size;	/* Size of the ringbuffer	*/
 extern spinlock_t	dgnc_global_lock;	/* Driver global spinlock	*/
 extern uint		dgnc_NumBoards;		/* Total number of boards	*/
-extern struct board_t	*dgnc_Board[MAXBOARDS];	/* Array of board structs	*/
+extern struct dgnc_board	*dgnc_Board[MAXBOARDS];	/* Array of board structs	*/
 extern ulong		dgnc_poll_counter;	/* Times the poller has run	*/
 extern char		*dgnc_state_text[];	/* Array of state text		*/
 extern char		*dgnc_driver_state_text[];/* Array of driver state text */

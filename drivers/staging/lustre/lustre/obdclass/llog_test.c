@@ -44,9 +44,9 @@
 #include <linux/module.h>
 #include <linux/init.h>
 
-#include <obd_class.h>
-#include <lustre_fid.h>
-#include <lustre_log.h>
+#include "../include/obd_class.h"
+#include "../include/lustre_fid.h"
+#include "../include/lustre_log.h"
 
 /* This is slightly more than the number of records that can fit into a
  * single llog file, because the llog_log_header takes up some of the
@@ -242,7 +242,7 @@ static int llog_test_3(const struct lu_env *env, struct obd_device *obd,
 
 		hdr.lrh_len = 8;
 		hdr.lrh_type = OBD_CFG_REC;
-		memset(buf, 0, sizeof buf);
+		memset(buf, 0, sizeof(buf));
 		rc = llog_write(env, llh, &hdr, NULL, 0, buf, -1);
 		if (rc < 0) {
 			CERROR("3b: write 10 records failed at #%d: %d\n",
@@ -277,8 +277,8 @@ static int llog_test_3(const struct lu_env *env, struct obd_device *obd,
 		char			buf_even[24];
 		char			buf_odd[32];
 
-		memset(buf_odd, 0, sizeof buf_odd);
-		memset(buf_even, 0, sizeof buf_even);
+		memset(buf_odd, 0, sizeof(buf_odd));
+		memset(buf_even, 0, sizeof(buf_even));
 		if ((i % 2) == 0) {
 			hdr.lrh_len = 24;
 			hdr.lrh_type = OBD_CFG_REC;
@@ -939,13 +939,17 @@ cleanup_ctxt:
 	return rc;
 }
 
-#ifdef LPROCFS
-static struct lprocfs_vars lprocfs_llog_test_obd_vars[] = { {0} };
-static struct lprocfs_vars lprocfs_llog_test_module_vars[] = { {0} };
+#if defined (CONFIG_PROC_FS)
+static struct lprocfs_vars lprocfs_llog_test_obd_vars[] = { { NULL } };
+static struct lprocfs_vars lprocfs_llog_test_module_vars[] = { { NULL } };
 static void lprocfs_llog_test_init_vars(struct lprocfs_static_vars *lvars)
 {
     lvars->module_vars  = lprocfs_llog_test_module_vars;
     lvars->obd_vars     = lprocfs_llog_test_obd_vars;
+}
+#else
+static void lprocfs_llog_test_init_vars(struct lprocfs_static_vars *lvars)
+{
 }
 #endif
 
@@ -1048,7 +1052,7 @@ static struct obd_ops llog_obd_ops = {
 
 static int __init llog_test_init(void)
 {
-	struct lprocfs_static_vars lvars;
+	struct lprocfs_static_vars uninitialized_var(lvars);
 
 	lprocfs_llog_test_init_vars(&lvars);
 	return class_register_type(&llog_obd_ops, NULL,

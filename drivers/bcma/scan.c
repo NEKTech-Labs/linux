@@ -32,17 +32,17 @@ static const struct bcma_device_id_name bcma_bcm_device_names[] = {
 	{ BCMA_CORE_4706_CHIPCOMMON, "BCM4706 ChipCommon" },
 	{ BCMA_CORE_4706_SOC_RAM, "BCM4706 SOC RAM" },
 	{ BCMA_CORE_4706_MAC_GBIT, "BCM4706 GBit MAC" },
-	{ BCMA_CORE_PCIEG2, "PCIe Gen 2" },
-	{ BCMA_CORE_DMA, "DMA" },
-	{ BCMA_CORE_SDIO3, "SDIO3" },
-	{ BCMA_CORE_USB20, "USB 2.0" },
-	{ BCMA_CORE_USB30, "USB 3.0" },
-	{ BCMA_CORE_A9JTAG, "ARM Cortex A9 JTAG" },
-	{ BCMA_CORE_DDR23, "Denali DDR2/DDR3 memory controller" },
-	{ BCMA_CORE_ROM, "ROM" },
-	{ BCMA_CORE_NAND, "NAND flash controller" },
-	{ BCMA_CORE_QSPI, "SPI flash controller" },
-	{ BCMA_CORE_CHIPCOMMON_B, "Chipcommon B" },
+	{ BCMA_CORE_NS_PCIEG2, "PCIe Gen 2" },
+	{ BCMA_CORE_NS_DMA, "DMA" },
+	{ BCMA_CORE_NS_SDIO3, "SDIO3" },
+	{ BCMA_CORE_NS_USB20, "USB 2.0" },
+	{ BCMA_CORE_NS_USB30, "USB 3.0" },
+	{ BCMA_CORE_NS_A9JTAG, "ARM Cortex A9 JTAG" },
+	{ BCMA_CORE_NS_DDR23, "Denali DDR2/DDR3 memory controller" },
+	{ BCMA_CORE_NS_ROM, "ROM" },
+	{ BCMA_CORE_NS_NAND, "NAND flash controller" },
+	{ BCMA_CORE_NS_QSPI, "SPI flash controller" },
+	{ BCMA_CORE_NS_CHIPCOMMON_B, "Chipcommon B" },
 	{ BCMA_CORE_ARMCA9, "ARM Cortex A9 core (ihost)" },
 	{ BCMA_CORE_AMEMC, "AMEMC (DDR)" },
 	{ BCMA_CORE_ALTA, "ALTA (I2S)" },
@@ -269,6 +269,8 @@ static struct bcma_device *bcma_find_core_reverse(struct bcma_bus *bus, u16 core
 	return NULL;
 }
 
+#define IS_ERR_VALUE_U32(x) ((x) >= (u32)-MAX_ERRNO)
+
 static int bcma_get_next_core(struct bcma_bus *bus, u32 __iomem **eromptr,
 			      struct bcma_device_id *match, int core_num,
 			      struct bcma_device *core)
@@ -351,11 +353,11 @@ static int bcma_get_next_core(struct bcma_bus *bus, u32 __iomem **eromptr,
 	 * the main register space for the core
 	 */
 	tmp = bcma_erom_get_addr_desc(bus, eromptr, SCAN_ADDR_TYPE_SLAVE, 0);
-	if (tmp == 0 || IS_ERR_VALUE(tmp)) {
+	if (tmp == 0 || IS_ERR_VALUE_U32(tmp)) {
 		/* Try again to see if it is a bridge */
 		tmp = bcma_erom_get_addr_desc(bus, eromptr,
 					      SCAN_ADDR_TYPE_BRIDGE, 0);
-		if (tmp == 0 || IS_ERR_VALUE(tmp)) {
+		if (tmp == 0 || IS_ERR_VALUE_U32(tmp)) {
 			return -EILSEQ;
 		} else {
 			bcma_info(bus, "Bridge found\n");
@@ -369,7 +371,7 @@ static int bcma_get_next_core(struct bcma_bus *bus, u32 __iomem **eromptr,
 		for (j = 0; ; j++) {
 			tmp = bcma_erom_get_addr_desc(bus, eromptr,
 				SCAN_ADDR_TYPE_SLAVE, i);
-			if (IS_ERR_VALUE(tmp)) {
+			if (IS_ERR_VALUE_U32(tmp)) {
 				/* no more entries for port _i_ */
 				/* pr_debug("erom: slave port %d "
 				 * "has %d descriptors\n", i, j); */
@@ -386,7 +388,7 @@ static int bcma_get_next_core(struct bcma_bus *bus, u32 __iomem **eromptr,
 		for (j = 0; ; j++) {
 			tmp = bcma_erom_get_addr_desc(bus, eromptr,
 				SCAN_ADDR_TYPE_MWRAP, i);
-			if (IS_ERR_VALUE(tmp)) {
+			if (IS_ERR_VALUE_U32(tmp)) {
 				/* no more entries for port _i_ */
 				/* pr_debug("erom: master wrapper %d "
 				 * "has %d descriptors\n", i, j); */
@@ -404,7 +406,7 @@ static int bcma_get_next_core(struct bcma_bus *bus, u32 __iomem **eromptr,
 		for (j = 0; ; j++) {
 			tmp = bcma_erom_get_addr_desc(bus, eromptr,
 				SCAN_ADDR_TYPE_SWRAP, i + hack);
-			if (IS_ERR_VALUE(tmp)) {
+			if (IS_ERR_VALUE_U32(tmp)) {
 				/* no more entries for port _i_ */
 				/* pr_debug("erom: master wrapper %d "
 				 * has %d descriptors\n", i, j); */

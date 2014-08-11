@@ -393,15 +393,14 @@ static int i810_dma_initialize(struct drm_device *dev,
 
 	/* Program Hardware Status Page */
 	dev_priv->hw_status_page =
-	    pci_alloc_consistent(dev->pdev, PAGE_SIZE,
-				 &dev_priv->dma_status_page);
+		pci_zalloc_consistent(dev->pdev, PAGE_SIZE,
+				      &dev_priv->dma_status_page);
 	if (!dev_priv->hw_status_page) {
 		dev->dev_private = (void *)dev_priv;
 		i810_dma_cleanup(dev);
 		DRM_ERROR("Can not allocate hardware status page\n");
 		return -ENOMEM;
 	}
-	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
 	DRM_DEBUG("hw status page @ %p\n", dev_priv->hw_status_page);
 
 	I810_WRITE(0x02080, dev_priv->dma_status_page);
@@ -944,8 +943,6 @@ static int i810_dma_vertex(struct drm_device *dev, void *data,
 				 dma->buflist[vertex->idx],
 				 vertex->discard, vertex->used);
 
-	atomic_add(vertex->used, &dev->counts[_DRM_STAT_SECONDARY]);
-	atomic_inc(&dev->counts[_DRM_STAT_DMA]);
 	sarea_priv->last_enqueue = dev_priv->counter - 1;
 	sarea_priv->last_dispatch = (int)hw_status[5];
 
@@ -1105,8 +1102,6 @@ static int i810_dma_mc(struct drm_device *dev, void *data,
 	i810_dma_dispatch_mc(dev, dma->buflist[mc->idx], mc->used,
 			     mc->last_render);
 
-	atomic_add(mc->used, &dev->counts[_DRM_STAT_SECONDARY]);
-	atomic_inc(&dev->counts[_DRM_STAT_DMA]);
 	sarea_priv->last_enqueue = dev_priv->counter - 1;
 	sarea_priv->last_dispatch = (int)hw_status[5];
 
@@ -1197,12 +1192,9 @@ static int i810_flip_bufs(struct drm_device *dev, void *data,
 
 int i810_driver_load(struct drm_device *dev, unsigned long flags)
 {
-	/* i810 has 4 more counters */
-	dev->counters += 4;
-	dev->types[6] = _DRM_STAT_IRQ;
-	dev->types[7] = _DRM_STAT_PRIMARY;
-	dev->types[8] = _DRM_STAT_SECONDARY;
-	dev->types[9] = _DRM_STAT_DMA;
+	/* Our userspace depends upon the agp mapping support. */
+	if (!dev->agp)
+		return -EINVAL;
 
 	pci_set_master(dev->pdev);
 
@@ -1258,7 +1250,7 @@ const struct drm_ioctl_desc i810_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I810_FLIP, i810_flip_bufs, DRM_AUTH|DRM_UNLOCKED),
 };
 
-int i810_max_ioctl = DRM_ARRAY_SIZE(i810_ioctls);
+int i810_max_ioctl = ARRAY_SIZE(i810_ioctls);
 
 /**
  * Determine if the device really is AGP or not.

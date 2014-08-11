@@ -40,11 +40,11 @@
 
 #define DEBUG_SUBSYSTEM S_CLASS
 
-#include <obd_class.h>
-#include <obd_support.h>
-#include <lustre_fid.h>
+#include "../include/obd_class.h"
+#include "../include/obd_support.h"
+#include "../include/lustre_fid.h"
 #include <linux/list.h>
-#include <cl_object.h>
+#include "../include/cl_object.h"
 #include "cl_internal.h"
 
 /*****************************************************************************
@@ -227,7 +227,7 @@ int cl_io_rw_init(const struct lu_env *env, struct cl_io *io,
 	LINVRNT(io->ci_obj != NULL);
 
 	LU_OBJECT_HEADER(D_VFSTRACE, env, &io->ci_obj->co_lu,
-			 "io range: %u ["LPU64", "LPU64") %u %u\n",
+			 "io range: %u [%llu, %llu) %u %u\n",
 			 iot, (__u64)pos, (__u64)pos + count,
 			 io->u.ci_rw.crw_nonblock, io->u.ci_wr.wr_append);
 	io->u.ci_rw.crw_pos    = pos;
@@ -942,7 +942,7 @@ int cl_io_cancel(const struct lu_env *env, struct cl_io *io,
 	struct cl_page *page;
 	int result = 0;
 
-	CERROR("Canceling ongoing page trasmission\n");
+	CERROR("Canceling ongoing page transmission\n");
 	cl_page_list_for_each(page, queue) {
 		int rc;
 
@@ -1387,7 +1387,7 @@ static void cl_req_free(const struct lu_env *env, struct cl_req *req)
 				cl_object_put(env, obj);
 			}
 		}
-		OBD_FREE(req->crq_o, req->crq_nrobjs * sizeof req->crq_o[0]);
+		OBD_FREE(req->crq_o, req->crq_nrobjs * sizeof(req->crq_o[0]));
 	}
 	OBD_FREE_PTR(req);
 }
@@ -1452,7 +1452,7 @@ struct cl_req *cl_req_alloc(const struct lu_env *env, struct cl_page *page,
 	if (req != NULL) {
 		int result;
 
-		OBD_ALLOC(req->crq_o, nr_objects * sizeof req->crq_o[0]);
+		OBD_ALLOC(req->crq_o, nr_objects * sizeof(req->crq_o[0]));
 		if (req->crq_o != NULL) {
 			req->crq_nrobjs = nr_objects;
 			req->crq_type = crt;
@@ -1642,7 +1642,7 @@ int cl_sync_io_wait(const struct lu_env *env, struct cl_io *io,
 		cpu_relax();
 	}
 
-	POISON(anchor, 0x5a, sizeof *anchor);
+	POISON(anchor, 0x5a, sizeof(*anchor));
 	return rc;
 }
 EXPORT_SYMBOL(cl_sync_io_wait);

@@ -426,11 +426,6 @@ static void sport_stop_rx(struct uart_port *port)
 	SSYNC();
 }
 
-static void sport_enable_ms(struct uart_port *port)
-{
-	pr_debug("%s enter\n", __func__);
-}
-
 static void sport_break_ctl(struct uart_port *port, int break_state)
 {
 	pr_debug("%s enter\n", __func__);
@@ -499,6 +494,13 @@ static void sport_set_termios(struct uart_port *port,
 	int i;
 
 	pr_debug("%s enter, c_cflag:%08x\n", __func__, termios->c_cflag);
+
+#ifdef CONFIG_SERIAL_BFIN_SPORT_CTSRTS
+	if (old == NULL && up->cts_pin != -1)
+		termios->c_cflag |= CRTSCTS;
+	else if (up->cts_pin == -1)
+		termios->c_cflag &= ~CRTSCTS;
+#endif
 
 	switch (termios->c_cflag & CSIZE) {
 	case CS8:
@@ -587,7 +589,6 @@ struct uart_ops sport_uart_ops = {
 	.stop_tx	= sport_stop_tx,
 	.start_tx	= sport_start_tx,
 	.stop_rx	= sport_stop_rx,
-	.enable_ms	= sport_enable_ms,
 	.break_ctl	= sport_break_ctl,
 	.startup	= sport_startup,
 	.shutdown	= sport_shutdown,
@@ -766,9 +767,8 @@ static int sport_uart_probe(struct platform_device *pdev)
 			return -ENOMEM;
 		}
 
-		ret = peripheral_request_list(
-			(unsigned short *)dev_get_platdata(&pdev->dev),
-			DRV_NAME);
+		ret = peripheral_request_list(dev_get_platdata(&pdev->dev),
+						DRV_NAME);
 		if (ret) {
 			dev_err(&pdev->dev,
 				"Fail to request SPORT peripherals\n");
@@ -814,10 +814,8 @@ static int sport_uart_probe(struct platform_device *pdev)
 		res = platform_get_resource(pdev, IORESOURCE_IO, 0);
 		if (res == NULL)
 			sport->cts_pin = -1;
-		else {
+		else
 			sport->cts_pin = res->start;
-			sport->port.flags |= ASYNC_CTS_FLOW;
-		}
 
 		res = platform_get_resource(pdev, IORESOURCE_IO, 1);
 		if (res == NULL)
@@ -844,8 +842,7 @@ static int sport_uart_probe(struct platform_device *pdev)
 out_error_unmap:
 		iounmap(sport->port.membase);
 out_error_free_peripherals:
-		peripheral_free_list(
-			(unsigned short *)dev_get_platdata(&pdev->dev));
+		peripheral_free_list(dev_get_platdata(&pdev->dev));
 out_error_free_mem:
 		kfree(sport);
 		bfin_sport_uart_ports[pdev->id] = NULL;
@@ -864,8 +861,7 @@ static int sport_uart_remove(struct platform_device *pdev)
 	if (sport) {
 		uart_remove_one_port(&sport_uart_reg, &sport->port);
 		iounmap(sport->port.membase);
-		peripheral_free_list(
-			(unsigned short *)dev_get_platdata(&pdev->dev));
+		peripheral_free_list(dev_get_platdata(&pdev->dev));
 		kfree(sport);
 		bfin_sport_uart_ports[pdev->id] = NULL;
 	}

@@ -182,18 +182,7 @@ static void find_regs(tilegx_bundle_bits bundle, uint64_t *rd, uint64_t *ra,
 	int i;
 	uint64_t reg;
 	uint64_t reg_map = 0, alias_reg_map = 0, map;
-	bool alias;
-
-	*ra = -1;
-	*rb = -1;
-
-	if (rd)
-		*rd = -1;
-
-	*clob1 = -1;
-	*clob2 = -1;
-	*clob3 = -1;
-	alias = false;
+	bool alias = false;
 
 	/*
 	 * Parse fault bundle, find potential used registers and mark
@@ -551,8 +540,8 @@ static tilegx_bundle_bits  jit_x1_bnezt(int ra, int broff)
 /*
  * This function generates unalign fixup JIT.
  *
- * We fist find unalign load/store instruction's destination, source
- * reguisters: ra, rb and rd. and 3 scratch registers by calling
+ * We first find unalign load/store instruction's destination, source
+ * registers: ra, rb and rd. and 3 scratch registers by calling
  * find_regs(...). 3 scratch clobbers should not alias with any register
  * used in the fault bundle. Then analyze the fault bundle to determine
  * if it's a load or store, operand width, branch or address increment etc.
@@ -569,7 +558,7 @@ void jit_bundle_gen(struct pt_regs *regs, tilegx_bundle_bits bundle,
 	tilegx_bundle_bits bundle_2 = 0;
 	/* If bundle_2_enable = false, bundle_2 is fnop/nop operation. */
 	bool     bundle_2_enable = true;
-	uint64_t ra, rb, rd = -1, clob1, clob2, clob3;
+	uint64_t ra = -1, rb = -1, rd = -1, clob1 = -1, clob2 = -1, clob3 = -1;
 	/*
 	 * Indicate if the unalign access
 	 * instruction's registers hit with
